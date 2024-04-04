@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head style="margin-bottom: 60px;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级选项_小组摇人</title>
+    <style>
+        * {
+            margin: 0 auto;
+        }
+
+        span {
+            font-size: 14px;
+        }
+
+        .caozuo {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        input,
+        select {
+            border-radius: 8px;
+            font-size: 16px;
+            padding: 5px;
+            border: 1px solid;
+        }
+
+        button {
+            border-radius: 8px;
+            font-size: 16px;
+            padding: 1px 8px 5px 8px;
+            margin-left: 15px;
+            border: 2px solid;
+        }
+
+        .backindex {
+            font-size: 12px;
+            padding: 0px 2px 0px 2px;
+        }
+
+        .winners {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid;
+        }
+
+        .person {
+            position: absolute;
+            top: 308px;
+        }
+
+        .winners_button {
+            position: absolute;
+            top: 348px;
+            padding-left: 17px;
+            padding-right: 17px;
+            margin-left: 0px;
+        }
+
+        
+
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. 获取所有小组信息并填充到选择框中
+            fetch('/api/groups')
+                .then(response => response.json())
+                .then(data => {
+                    const groupSelect = document.getElementById("groupSelect");
+                    data.forEach(groupId => {
+                        let option = document.createElement("option");
+                        option.value = groupId;
+                        option.textContent = "小组 " + groupId;
+                        groupSelect.appendChild(option);
+                    });
+                });
+
+            // 2. 添加"抽人"按钮的事件监听
+            document.getElementById("drawPeople").addEventListener("click", function () {
+                const groupSelect = document.getElementById("groupSelect").value;
+                const numPeople = document.getElementById("numPeople").value;
+                const saveHistory = document.getElementById("history").checked;
+
+                fetch('/api/draw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        group: groupSelect,
+                        numPeople: numPeople,
+                        history: saveHistory
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultDiv = document.getElementById("result");
+                        resultDiv.innerHTML = '';  // 清空之前的结果
+                        data.forEach(name => {
+                            let p = document.createElement("p");
+                            p.textContent = name;
+                            resultDiv.appendChild(p);
+                        });
+                    });
+            });
+        });
+
+        function drawPeople() {
+            const groupSelect = Array.from(document.getElementById("groupSelect").selectedOptions).map(option => option.value);
+            const numPeople = document.getElementById("numPeople").value;
+            const saveHistory = document.getElementById("history").checked;
+
+            fetch('/api/draw', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    group: groupSelect,
+                    numPeople: numPeople,
+                    history: saveHistory
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById("result");
+                    resultDiv.innerHTML = '';  // 清空之前的结果
+                    data.forEach(item => {
+                        let p = document.createElement("p");
+                        p.textContent = item.name + "(" + item.group + ")";
+                        resultDiv.appendChild(p);
+                    });
+                });
+        }
+
+    </script>
+
+</head>
+
+<body style="width: 500px;padding-top: 10vh;text-align: center;">
+    <div>
+        <h1 style="padding-bottom: 20px;">高级选项_小组摇人</h1>
+        <div style="border: 1px solid;padding: 10px;border-radius: 15px;">
+            <span>
+                <strong>说明:</strong>你将在这里使用到更高级的筛选挑选功能，例如小组选择无小组，人数选择1那么就相当于你每个小组都抽选了一个人。
+                如果多选1,2组人数选择2那么就是一组二组挑选两个总共四人;提醒多选你可以按住Crtl或者Shift配合鼠标点击。</span>
+            <br>
+        </div>
+    </div>
+
+    <div class="caozuo">
+        <h3 style="margin-bottom: 8px;">功能按键</h3>
+
+        <select id="groupSelect" multiple size="5" style="margin-right: 20px;">
+            <option value="all">所有小组</option>
+        </select>
+
+        <input type="number" id="numPeople" min="1" max="5" placeholder="人数" class="person" />
+
+        <button onclick="drawPeople()" class="winners_button">抽人</button>
+
+        <div class="history" style="margin-top: 10px;">
+            <input type="checkbox" id="history"><span
+            style="font-size: 13px;margin-left: 5px;margin-right: 5px;">保存历史</span>
+            <a href="/"><button class="backindex">返回首页</button></a>
+        </div>
+    </div>
+
+    <div class="winners">
+        <h3>中奖名单</h3>
+        <div id="result"></div>
+    </div>
+
+    <div style="zoom: 70%;position: fixed;left: 25%;top: 95%;">
+        <span>准守MIT协议，你可以自由修改和使用，请注明脚本来自 <a href="https://github.com/BecomeWhoCN">Github-BecomeWhoCN</a></span><br>
+        <span>退出软件将会重置点名记录，为了精简未使用cookies，启动将自动占用5022端口提供服务</span>
+        其他：<a href="{{ url_for('readme_page') }}">阅读使用规范和使用手册</a>
+    </div>
+
+</body>
+
+</html>

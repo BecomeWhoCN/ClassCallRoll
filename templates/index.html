@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[班级]点名系统</title>
+    <script>
+        let intervalId;
+        let winners = [];
+        let totalNamesCount = 62;
+
+        function startRolling() {
+            intervalId = setInterval(() => {
+                let randomNum = Math.floor(Math.random() * totalNamesCount) + 1;
+                document.querySelector("span:nth-child(2)").innerText = randomNum;
+            }, 50);  // 每50毫秒更新一次数字
+        }
+
+        function updateWinnerList(name) {
+            winners.push(name);
+            let winnerListDiv = document.getElementById("winnerList");
+            winnerListDiv.innerHTML = "<p>中奖列表</p>";
+            var name_quantity = 4;
+
+            for (let i = 0; i < winners.length; i++) {
+                // 如果是每行的第一个名字，不添加&emsp;，否则添加两个&emsp;作为分隔符
+                if (i % name_quantity == 0) {
+                    winnerListDiv.innerHTML += "<span>" + winners[i] + "</span>";
+                } else {
+                    winnerListDiv.innerHTML += "&emsp;&emsp;<span>" + winners[i] + "</span>";
+                }
+
+                if ((i + 1) % name_quantity == 0) {
+                    winnerListDiv.innerHTML += "<br><br>";
+                }
+            }
+        }
+
+        function callName() {
+            startRolling();  // 启动随机数滚动动画
+
+            setTimeout(() => {
+                clearInterval(intervalId);  // 停止动画
+                fetch('/call_name')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.querySelector("span:nth-child(2)").innerText = data.id;
+                        document.getElementById("selectedName").innerText = "被选中的名字是: " + data.name;
+                        updateWinnerList(data.name);
+                    });
+            }, 500);  // 在500毫秒后停止动画并显示实际的选中值
+        }
+
+        function resetAll() {
+            fetch('/reset')
+                .then(response => response.text())
+                .then(data => {
+                    if (data === "Reset successful!") {
+                        winners = [];  // 清空前端的中奖列表
+                        let winnerListDiv = document.getElementById("winnerList");
+                        winnerListDiv.innerHTML = "<p style='margin-bottom: 15px;'>中奖列表</p>";  // 重置中奖列表的显示内容
+                        alert("已成功重置!");
+                    } else {
+                        alert("重置失败，请稍后再试!");
+                    }
+                });
+        }
+
+        function callNames() {
+            let num = document.getElementById("numNames").value;
+            fetch('/call_names/' + num)
+                .then(response => response.json())
+                .then(data => {
+                    for (let record of data) {
+                        updateWinnerList(record.name);
+                    }
+                });
+        }
+
+        function exitApp() {
+            if (confirm("确定要退出程序吗？")) {
+                fetch('/exit');
+            }
+        }
+
+        window.onload = function () {
+            fetch('/get_called_names')
+                .then(response => response.json())
+                .then(data => {
+                    for (let name of data) {
+                        updateWinnerList(name);
+                    }
+                });
+        };
+
+        function updateCSV() {
+            let choice = confirm("此操作会重新读取csv文件以更新所选范围，是否确定操作？");
+
+            if (choice) {
+                sendUpdateRequest("delete_and_update");
+            } else {
+                choice = confirm("是否要直接更新CSV而不删除记录？");
+                if (choice) {
+                    sendUpdateRequest("directly_update");
+                } else {
+                    alert("Operation cancelled!");
+                }
+            }
+        }
+
+        function sendUpdateRequest(action) {
+            fetch('/update_csv', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=${action}`
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                });
+        }
+    </script>
+    <style>
+        .Roll {
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .other {
+            font-size: 16px;
+            font-weight: 600;
+            border: 1.5px solid;
+            border-radius: 15px;
+            width: 500px;
+            margin: 0 auto;
+            margin-top: 20px;
+            padding-bottom: 5px;
+        }
+
+        div>p {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        #winnerList {
+            padding-bottom: 25px;
+        }
+
+        div>button {
+            border-radius: 10px;
+            margin-left: 7px;
+            margin-right: 7px;
+        }
+
+        a {
+            color: black;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body style="text-align: center;margin-top: 10vh;">
+    <h1>[班级]点名系统</h1>
+    <h3>小兔崽子不要让我抽到你拉！</h3>
+    <button class="Roll" onclick="callName()">开始选人</button>
+    <div style="margin-top: 30px;font-size: 22px;">
+        <span>随机 数：</span>
+        <span></span><br><br>
+        <span id="selectedName" style="font-weight: 600;">被选中的名字是？</span>
+    </div>
+
+    <div class="other">
+        <span>辅助功能</span><br><br>
+        <input type="number" id="numNames" placeholder="输入人数" min="1" max="62" style="width: 30px;">
+        <button onclick="callNames()" style="margin-left: 0px;">批量点名</button>
+        <button onclick="resetAll()">重置所有</button>
+        <button onclick="exitApp()">退出程序</button>
+        <button onclick="updateCSV()">更新数据</button>
+        <button id="advancedOptionsBtn">高级选项</button>
+    </div>
+
+    <div id="winnerList" class="other">
+        <p style="margin-bottom: 15px;">中奖列表</p>
+    </div>
+
+    <div style="zoom: 70%;position: fixed;left: 25%;top: 95%;">
+        <span>准守MIT协议，你可以自由修改和使用，请注明脚本来自 <a href="https://github.com/BecomeWhoCN">Github-BecomeWhoCN</a></span><br>
+        <span>退出软件将会重置点名记录，为了精简未使用cookies，启动将自动占用5022端口提供服务</span>
+        其他：<a href="{{ url_for('readme_page') }}">阅读使用规范和使用手册</a>
+    </div>
+
+    <script>
+        document.getElementById('advancedOptionsBtn').addEventListener('click', function () {
+            window.location.href = "{{ url_for('group_page') }}";
+        });
+
+        $(document).ready(function () {
+            // 调用后端端点获取所有小组
+            $.get("/get_groups", function (data) {
+                // 填充下拉菜单
+                const groupSelect = $("#groupSelect");
+                data.forEach(group => {
+                    groupSelect.append(new Option(group, group));
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
