@@ -7,17 +7,17 @@
 其他：阅读使用规范和使用手册（readme.md/readme.html)
 使用须知：在根目录中必须要有一个名为`名单.csv`的文件，字符集默认为GBK和UTF-8，支持使用代码编辑器和各类office套件
 
-
-
 ### 部署说明
 
 前端：Html，JS  
 后端：Python 
 第三方python库：pandas，numpy，flask
 
-编译后的版本：下载编译的zip文件，解压后请修改`名单.csv`文件即可，启动请点击 `main.exe` 文件，系统会自动读取csv文件中的信息并且启动浏览器。因为Py2exe将文件编译后出现了无法更改模板的问题，我们建议有需要更改模板的人下载源代码编译后自己二次封装。
+编译后的版本：下载编译的zip文件，解压后请修改`名单.csv`文件即可，启动请点击 `main.exe` 文件，系统会自动读取csv文件中的信息并且启动浏览器。可以根据个人需要修改template模板
 
 源码模式：源码模式需要你本地有python3.6以上的版本并且拥有pandas，numpy，flask第三方库。提前修改根目录下的`名单.csv`，根据需要你可以还需要修改templates中html样式，随后在命令行或者开发环境中运行main.py运行即可。
+
+打包推荐命令：`pyinstaller --noconfirm --log-level=WARN --clean --add-data "./templates;templates" --icon=./templates/ClassCallRoll.ico main.py`
 
 ##### 点名记录消失的情况
 
